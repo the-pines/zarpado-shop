@@ -65,7 +65,9 @@ export default async function Home() {
             1. Sign up for Monad Pay at usemonadpay.com <br />
             2. Click an item on this page <br />
             3. Use the card details in the Monad Pay app <br />
-            4. Get your item!
+            4. Get your item! <br />
+            If your card says too many attempts, it is because you don't have
+            enough funds. This is intended! (Currently only works with USDC)
           </p>
         </header>
       </div>
