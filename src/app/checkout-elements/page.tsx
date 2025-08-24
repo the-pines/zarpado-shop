@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Elements,
@@ -160,7 +160,7 @@ function CheckoutForm({
   );
 }
 
-export default function CheckoutElementsPage() {
+function CheckoutElementsContent() {
   const search = useSearchParams();
   const [clientSecret, setClientSecret] = useState<string | null>(null);
 
@@ -241,5 +241,13 @@ export default function CheckoutElementsPage() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function CheckoutElementsPage() {
+  return (
+    <Suspense fallback={<div className='text-white/70'>Loading…</div>}>
+      <CheckoutElementsContent />
+    </Suspense>
   );
 }
