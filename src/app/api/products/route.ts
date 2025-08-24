@@ -16,7 +16,8 @@ export async function GET() {
         (p) =>
           typeof p.unit_amount === "number" &&
           p.product &&
-          typeof p.product !== "string"
+          typeof p.product !== "string" &&
+          (p.product as Stripe.Product).active
       )
       .map((price) => {
         const product = price.product as Stripe.Product;
