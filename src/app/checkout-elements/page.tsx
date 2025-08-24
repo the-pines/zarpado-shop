@@ -163,6 +163,7 @@ function CheckoutForm({
 function CheckoutElementsContent() {
   const search = useSearchParams();
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const qsPriceId = search.get("priceId") || undefined;
   const qsEmail = search.get("email") || "example@gmail.com";
@@ -176,6 +177,7 @@ function CheckoutElementsContent() {
   useEffect(() => {
     async function createIntent() {
       try {
+        setLoadError(null);
         let priceIdToUse: string | undefined = qsPriceId;
         if (!priceIdToUse) {
           const res = await fetch("/api/products", { cache: "no-store" });
@@ -194,9 +196,13 @@ function CheckoutElementsContent() {
           }),
         });
         const intentData = await intentRes.json();
-        if (intentRes.ok) setClientSecret(intentData.clientSecret);
+        if (intentRes.ok) {
+          setClientSecret(intentData.clientSecret);
+        } else {
+          setLoadError(intentData?.error || "Failed to prepare payment");
+        }
       } catch {
-        // ignore
+        setLoadError("Failed to prepare payment");
       }
     }
     createIntent();
@@ -228,7 +234,11 @@ function CheckoutElementsContent() {
       </div>
 
       <main className='mx-auto max-w-md px-6 pb-24'>
-        {!clientSecret ? (
+        {loadError ? (
+          <div className='rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300'>
+            {loadError}
+          </div>
+        ) : !clientSecret ? (
           <div className='text-white/70'>Preparing payment…</div>
         ) : (
           <Elements stripe={stripePromise} options={options}>
