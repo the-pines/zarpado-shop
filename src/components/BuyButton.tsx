@@ -1,29 +1,36 @@
 "use client";
 
 import { useState } from "react";
-import { loadStripe } from "@stripe/stripe-js";
+import { useRouter } from "next/navigation";
 
-const stripePromise = loadStripe(
-  process.env.NEXT_PUBLIC_STRIPE_API_KEY as string
-);
+// Stripe redirect via Checkout no longer used here; we route to custom checkout
 
-export function BuyButton({ priceId }: { priceId: string }) {
+type BuyButtonAddress = {
+  country?: string;
+  postal_code?: string;
+};
+
+export function BuyButton({
+  priceId,
+  email,
+  address,
+}: {
+  priceId: string;
+  email?: string;
+  address?: BuyButtonAddress;
+}) {
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   async function handleClick() {
     try {
       setLoading(true);
-      const res = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ priceId }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Failed to start checkout");
-
-      const stripe = await stripePromise;
-      if (!stripe) throw new Error("Stripe failed to load");
-      await stripe.redirectToCheckout({ sessionId: data.id });
+      const params = new URLSearchParams();
+      params.set("priceId", priceId);
+      if (email) params.set("email", email);
+      if (address?.country) params.set("country", address.country);
+      if (address?.postal_code) params.set("postal_code", address.postal_code);
+      router.push(`/checkout-elements?${params.toString()}`);
     } catch (e) {
       console.error(e);
       alert("Something went wrong. Please try again.");

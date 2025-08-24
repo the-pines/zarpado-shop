@@ -106,7 +106,14 @@ export default async function Home() {
                       }).format(p.unitAmount / 100)
                     : "—"}
                 </span>
-                <BuyButton priceId={p.priceId} />
+                <div className='flex items-center gap-2'>
+                  <BuyButton
+                    priceId={p.priceId}
+                    email='example@gmail.com'
+                    address={{ country: "GB", postal_code: "WS11 1AA" }}
+                  />
+                  {/* Custom checkout link removed; BuyButton now routes there directly */}
+                </div>
               </div>
             </article>
           ))}
