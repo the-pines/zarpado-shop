@@ -36,16 +36,28 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ clientSecret: paymentIntent.client_secret });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error creating payment intent", error);
-    // Surface Stripe error message when available to aid debugging small amounts
-    const message =
-      (typeof error === "object" && error && (error as any).message) ||
-      "Failed to create payment intent";
-    const status =
-      typeof error === "object" && error && (error as any).statusCode
-        ? Number((error as any).statusCode)
-        : 500;
+    // Surface Stripe error message and status when available
+    const resolveMessage = (e: unknown): string => {
+      if (e && typeof e === "object" && "message" in e) {
+        const msg = (e as { message?: unknown }).message;
+        if (typeof msg === "string") return msg;
+      }
+      return "Failed to create payment intent";
+    };
+    const resolveStatus = (e: unknown): number => {
+      if (e && typeof e === "object" && "statusCode" in e) {
+        const sc = (e as { statusCode?: unknown }).statusCode;
+        const asNumber = typeof sc === "string" ? Number(sc) : sc;
+        if (typeof asNumber === "number" && Number.isFinite(asNumber)) {
+          return asNumber;
+        }
+      }
+      return 500;
+    };
+    const message = resolveMessage(error);
+    const status = resolveStatus(error);
     return NextResponse.json({ error: message }, { status });
   }
 }
