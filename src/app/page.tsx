@@ -1,103 +1,123 @@
 import Image from "next/image";
+import { headers } from "next/headers";
+import { BuyButton } from "@/components/BuyButton";
 
-export default function Home() {
+type ProductItem = {
+  id: string;
+  name: string;
+  description: string | null;
+  image: string | null;
+  priceId: string;
+  currency: string;
+  unitAmount: number | null;
+};
+
+async function getBaseUrl() {
+  const h = await headers();
+  const host = h.get("host");
+  const proto = h.get("x-forwarded-proto") ?? "http";
+  return `${proto}://${host}`;
+}
+
+async function getProducts(): Promise<ProductItem[]> {
+  const base = await getBaseUrl();
+  const res = await fetch(`${base}/api/products`, { cache: "no-store" });
+  if (!res.ok) return [];
+  const data = await res.json();
+  return data.items as ProductItem[];
+}
+
+export default async function Home() {
+  const products = await getProducts();
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className='min-h-screen w-full bg-gradient-to-br from-[#0b0b23] via-[#0f0f1f] to-[#1a0f1f] text-white'>
+      <div className='hero-wrap overflow-hidden'>
+        {/* Full-bleed animated layers */}
+        <div className='hero-layer hero-gradient-a' />
+        <div className='hero-layer hero-gradient-b' />
+        <div className='hero-layer hero-gradient-c' />
+        <div className='hero-layer shimmer opacity-10' />
+        <div className='hero-layer hero-noise' />
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
+        {/* QR pinned to very top-right without background */}
+        <a
+          href='https://usemonadpay.com'
+          target='_blank'
+          rel='noopener noreferrer'
+          className='hidden sm:block absolute right-6 md:right-12 top-1.5 md:top-3 z-[2]'
+          aria-label='Open Monad Pay'
+        >
+          <Image
+            src='/qr_code.png'
+            alt='Monad Pay QR'
+            width={180}
+            height={180}
+            priority
+          />
+        </a>
+
+        <header className='relative z-[1] mx-auto max-w-5xl px-6 pt-12 pb-6 text-center'>
+          <h1 className='text-2xl sm:text-4xl font-semibold tracking-tight'>
+            Zarpado
+          </h1>
+          <p className='mt-3 text-balance text-white/70 text-sm sm:text-base'>
+            To buy an item: <br />
+            1. Sign up for Monad Pay at usemonadpay.com <br />
+            2. Click an item on this page <br />
+            3. Use the card details in the Monad Pay app <br />
+            4. Get your item!
+          </p>
+        </header>
+      </div>
+
+      <main className='mx-auto max-w-6xl px-6 pb-24'>
+        <section className='grid gap-6 sm:grid-cols-2 lg:grid-cols-3'>
+          {products.map((p) => (
+            <article
+              key={p.id}
+              className='group rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm p-4 transition hover:bg-white/10'
+            >
+              <div className='relative aspect-[4/3] w-full overflow-hidden rounded-lg bg-black/20'>
+                {p.image ? (
+                  <Image
+                    src={p.image}
+                    alt={p.name}
+                    fill
+                    className='object-cover'
+                  />
+                ) : (
+                  <div className='flex h-full items-center justify-center text-white/40'>
+                    No image
+                  </div>
+                )}
+              </div>
+              <h3 className='mt-3 text-lg font-medium'>{p.name}</h3>
+              {p.description ? (
+                <p className='mt-1 line-clamp-2 text-sm text-white/60'>
+                  {p.description}
+                </p>
+              ) : null}
+              <div className='mt-2 flex items-center justify-between'>
+                <span className='text-sm font-semibold'>
+                  {typeof p.unitAmount === "number"
+                    ? new Intl.NumberFormat(undefined, {
+                        style: "currency",
+                        currency: p.currency.toUpperCase(),
+                      }).format(p.unitAmount / 100)
+                    : "—"}
+                </span>
+                <BuyButton priceId={p.priceId} />
+              </div>
+            </article>
+          ))}
+          {products.length === 0 && (
+            <div className='col-span-full text-center text-white/60'>
+              No products found. Ensure Stripe products with active prices
+              exist.
+            </div>
+          )}
+        </section>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
   );
 }
